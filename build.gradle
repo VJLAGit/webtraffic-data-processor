@@ -1,0 +1,93 @@
+buildscript {
+    repositories {
+        jcenter()
+    }
+    dependencies {
+        classpath 'com.github.jengelman.gradle.plugins:shadow:1.2.4'
+        classpath 'se.transmode.gradle:gradle-docker:1.2'
+    }
+}
+
+group 'com.dollarshave.de.webtraffic'
+version '1.0-SNAPSHOT'
+
+
+
+apply plugin: 'java'
+apply plugin: 'idea'
+apply plugin: 'docker'
+// This plugin provides the 'shadowJar' task, which create an assembly jar.
+// Because Spark requires your jar to bundle everything except spark and hadoop.
+apply plugin: 'com.github.johnrengelman.shadow'
+
+sourceCompatibility = 1.8
+
+shadowJar {
+    zip64 true
+    dependencies {
+        exclude(dependency('org.apache.spark:spark-core_2.10'))
+        exclude(dependency('org.apache.spark:spark-sql_2.10'))
+       // exclude(dependency('org.apache.spark:spark-hive_2.10'))
+       
+        exclude(dependency('org.apache.hadoop:hadoop-common'))
+        exclude(dependency('org.apache.hadoop:hadoop-client'))
+    }
+}
+
+/*configurations {
+    // other configurations e.g. - compile.exclude module: 'commons-logging'
+    all*.transitive = false
+}*/
+
+repositories {
+    mavenCentral()
+}
+
+jar {
+    baseName = 'webtraffic-data-processor'
+    manifest {
+        attributes 'Implementation-Title': 'webtraffic-data-processor',
+                    'Implementation-Version': version,
+                    'Main-Class': 'com.dollarshave.de.webtraffic.main.Starter'
+    }
+}
+
+dependencies {
+    // Logging.
+    compile 'org.slf4j:slf4j-api:1.7.22'
+    compile group: 'ch.qos.logback', name: 'logback-classic', version: '1.0.13'
+    compile group: 'ch.qos.logback', name: 'logback-core', version: '1.0.13'
+
+
+
+
+    compile 'commons-cli:commons-cli:1.2'
+    compile 'org.apache.commons:commons-lang3:3.0'
+
+    //Spark
+    compileOnly 'org.apache.spark:spark-core_2.10:2.0.1'
+    //set this spark-sql to 'compile' for local testing in eclipse/intellij
+    compileOnly 'org.apache.spark:spark-sql_2.10:2.0.1'
+
+    /*compile 'org.apache.spark:spark-hive_2.10:1.6.2'
+    compile 'com.databricks:spark-csv_2.10:1.5.0'*/
+    compileOnly 'org.apache.hadoop:hadoop-common:2.7.2'
+    compileOnly 'org.apache.hadoop:hadoop-client:2.7.2'
+
+
+    testCompile group: 'junit', name: 'junit', version: '4.11'
+}
+
+task buildDocker(type: Docker, dependsOn: build) {
+    push = false
+    group = 'dollarshave'
+    applicationName = 'webtraffic'
+    dockerfile = file('src/main/docker/Dockerfile')
+    doFirst {
+        copy {
+            from "build/libs/webtraffic-data-processor-${project.version}-all.jar"
+            into 'build/docker'
+        }
+    }
+
+}
