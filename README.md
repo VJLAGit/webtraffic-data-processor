@@ -29,7 +29,12 @@
 2. bin/spark-submit  /opt/webtraffic/webtraffic-data-processor.jar -m master -ip /opt/input/ -op /opt/output/
 3. Navigate /opt/output to validate data.
 
-## Steps to execute pre existing/uploaded image
+## Job Params:
+1. m -> mode , Posibble values are "local", "master" . 
+2. ip -> input path 
+3. op -> output path.  
+
+## Steps to execute Using pre built image uploaded docker.io 
 +. Image uploaded to docker.io as "arumv001/webtraffic" .   
 +. docker pull arumv001/webtraffic   
 +. Execute the same steps(Steps to Execute Job) with the change in image .   
